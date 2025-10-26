@@ -1,18 +1,137 @@
 from rest_framework import viewsets, permissions, status
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 from drf_spectacular.utils import extend_schema, OpenApiExample
-from .models import Item
+from .models import Role, Item, Company, Customer
 from .serializers import (
+    RoleSerializer,
     ItemSerializer, 
     UserSerializer, 
     LoginSerializer, 
     AuthTokenSerializer,
-    LogoutResponseSerializer
+    LogoutResponseSerializer,
+    CompanySerializer,
+    CustomerSerializer,
+    CustomerCreateSerializer
 )
+
+
+class RoleViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    API endpoint for viewing roles.
+    Supports GET operations only (roles are predefined).
+    """
+    queryset = Role.objects.all()
+    serializer_class = RoleSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    
+    @action(detail=True, methods=['get'])
+    def customers(self, request, pk=None):
+        """Get all customers with this role"""
+        role = self.get_object()
+        customers = role.customers.all()
+        serializer = CustomerSerializer(customers, many=True)
+        return Response(serializer.data)
+
+
+class CompanyViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint for managing companies.
+    Supports GET, POST, PUT, PATCH, DELETE operations.
+    """
+    queryset = Company.objects.all()
+    serializer_class = CompanySerializer
+    permission_classes = [permissions.IsAuthenticated]
+    
+    @action(detail=True, methods=['get'])
+    def customers(self, request, pk=None):
+        """Get all customers associated with this company"""
+        company = self.get_object()
+        customers = company.customers.all()
+        serializer = CustomerSerializer(customers, many=True)
+        return Response(serializer.data)
+
+
+class CustomerViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint for managing customers.
+    Supports GET, POST, PUT, PATCH, DELETE operations.
+    """
+    queryset = Customer.objects.select_related('user').prefetch_related('companies').all()
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get_serializer_class(self):
+        """Use different serializer for creation"""
+        if self.action == 'create':
+            return CustomerCreateSerializer
+        return CustomerSerializer
+    
+    @action(detail=True, methods=['post'])
+    def add_company(self, request, pk=None):
+        """Add a company to this customer"""
+        customer = self.get_object()
+        company_id = request.data.get('company_id')
+        
+        try:
+            company = Company.objects.get(id=company_id)
+            customer.companies.add(company)
+            return Response({'message': f'Company {company.name} added to customer'})
+        except Company.DoesNotExist:
+            return Response(
+                {'error': 'Company not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+    
+    @action(detail=True, methods=['post'])
+    def remove_company(self, request, pk=None):
+        """Remove a company from this customer"""
+        customer = self.get_object()
+        company_id = request.data.get('company_id')
+        
+        try:
+            company = Company.objects.get(id=company_id)
+            customer.companies.remove(company)
+            return Response({'message': f'Company {company.name} removed from customer'})
+        except Company.DoesNotExist:
+            return Response(
+                {'error': 'Company not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+    
+    @action(detail=True, methods=['post'])
+    def add_item(self, request, pk=None):
+        """Add an item to this customer"""
+        customer = self.get_object()
+        item_id = request.data.get('item_id')
+        
+        try:
+            item = Item.objects.get(id=item_id)
+            customer.items.add(item)
+            return Response({'message': f'Item {item.name} added to customer'})
+        except Item.DoesNotExist:
+            return Response(
+                {'error': 'Item not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+    
+    @action(detail=True, methods=['post'])
+    def remove_item(self, request, pk=None):
+        """Remove an item from this customer"""
+        customer = self.get_object()
+        item_id = request.data.get('item_id')
+        
+        try:
+            item = Item.objects.get(id=item_id)
+            customer.items.remove(item)
+            return Response({'message': f'Item {item.name} removed from customer'})
+        except Item.DoesNotExist:
+            return Response(
+                {'error': 'Item not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
 
 
 class ItemViewSet(viewsets.ModelViewSet):
@@ -20,9 +139,50 @@ class ItemViewSet(viewsets.ModelViewSet):
     API endpoint for managing items.
     Supports GET, POST, PUT, PATCH, DELETE operations.
     """
-    queryset = Item.objects.all()
+    queryset = Item.objects.prefetch_related('customers').all()
     serializer_class = ItemSerializer
     permission_classes = [permissions.IsAuthenticated]
+    
+    @action(detail=True, methods=['get'])
+    def customers(self, request, pk=None):
+        """Get all customers associated with this item"""
+        item = self.get_object()
+        customers = item.customers.all()
+        from .serializers import CustomerSummarySerializer
+        serializer = CustomerSummarySerializer(customers, many=True)
+        return Response(serializer.data)
+    
+    @action(detail=True, methods=['post'])
+    def add_customer(self, request, pk=None):
+        """Add a customer to this item"""
+        item = self.get_object()
+        customer_id = request.data.get('customer_id')
+        
+        try:
+            customer = Customer.objects.get(id=customer_id)
+            item.customers.add(customer)
+            return Response({'message': f'Customer {customer.full_name} added to item'})
+        except Customer.DoesNotExist:
+            return Response(
+                {'error': 'Customer not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+    
+    @action(detail=True, methods=['post'])
+    def remove_customer(self, request, pk=None):
+        """Remove a customer from this item"""
+        item = self.get_object()
+        customer_id = request.data.get('customer_id')
+        
+        try:
+            customer = Customer.objects.get(id=customer_id)
+            item.customers.remove(customer)
+            return Response({'message': f'Customer {customer.full_name} removed from item'})
+        except Customer.DoesNotExist:
+            return Response(
+                {'error': 'Customer not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
 
 
 class UserViewSet(viewsets.ReadOnlyModelViewSet):

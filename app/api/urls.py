@@ -4,6 +4,9 @@ from . import views
 
 # Create a router and register viewsets
 router = DefaultRouter()
+router.register(r'roles', views.RoleViewSet, basename='role')
+router.register(r'companies', views.CompanyViewSet, basename='company')
+router.register(r'customers', views.CustomerViewSet, basename='customer')
 router.register(r'items', views.ItemViewSet, basename='item')
 router.register(r'users', views.UserViewSet, basename='user')
 

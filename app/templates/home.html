@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block title %}Home - MonthlySpecs{% endblock %}
+
+{% block content %}
+<div class="card" style="text-align: center; padding: 4rem 2rem;">
+    <h2 style="font-size: 2.5rem; margin-bottom: 1rem; color: #2c3e50;">
+        Welcome to MonthlySpecs
+    </h2>
+    <p style="font-size: 1.2rem; color: #7f8c8d; margin-bottom: 2rem;">
+        Your complete API and customer management platform
+    </p>
+    
+    {% if user.is_authenticated %}
+        <div style="margin-top: 2rem;">
+            <p style="margin-bottom: 1.5rem; font-size: 1.1rem;">
+                Hello, <strong>{{ user.username }}</strong>!
+            </p>
+            <a href="{% url 'dashboard' %}" class="btn">Go to Dashboard</a>
+        </div>
+    {% else %}
+        <div style="margin-top: 2rem;">
+            <a href="{% url 'account_signup' %}" class="btn" style="margin-right: 1rem;">Get Started</a>
+            <a href="{% url 'account_login' %}" class="btn btn-secondary">Login</a>
+        </div>
+    {% endif %}
+</div>
+
+<div class="card">
+    <h3 style="margin-bottom: 1rem; color: #2c3e50;">Features</h3>
+    <ul style="list-style: none; padding: 0;">
+        <li style="padding: 0.75rem 0; border-bottom: 1px solid #eee;">
+            <strong>🔐 Token-based API Authentication</strong> - Secure access for external clients
+        </li>
+        <li style="padding: 0.75rem 0; border-bottom: 1px solid #eee;">
+            <strong>📚 Interactive API Documentation</strong> - Swagger UI for easy API exploration
+        </li>
+        <li style="padding: 0.75rem 0; border-bottom: 1px solid #eee;">
+            <strong>👥 Customer Management</strong> - Full CRUD operations with company relationships
+        </li>
+        <li style="padding: 0.75rem 0; border-bottom: 1px solid #eee;">
+            <strong>🏢 Company Management</strong> - Manage companies and customer associations
+        </li>
+        <li style="padding: 0.75rem 0;">
+            <strong>📦 Item Management</strong> - Track items with customer relationships
+        </li>
+    </ul>
+</div>
+{% endblock %}
