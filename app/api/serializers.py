@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import Role, Item, Company, Customer
+from .models import Role, Item, Company, Customer, PurchaseHistory
 
 
 class RoleSerializer(serializers.ModelSerializer):
@@ -189,7 +189,7 @@ class ItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = Item
         fields = [
-            'id', 'name', 'description', 'customer_count', 
+            'id', 'name', 'description', 'unit_price', 'customer_count', 
             'customers_detail', 'customer_ids', 'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
@@ -233,3 +233,49 @@ class AuthTokenSerializer(serializers.Serializer):
 class LogoutResponseSerializer(serializers.Serializer):
     """Serializer for logout response"""
     message = serializers.CharField(read_only=True)
+
+
+class PurchaseHistorySerializer(serializers.ModelSerializer):
+    """Serializer for PurchaseHistory model"""
+    customer_username = serializers.CharField(source='customer.user.username', read_only=True)
+    customer_email = serializers.CharField(source='customer.user.email', read_only=True)
+    item_name = serializers.CharField(source='item.name', read_only=True)
+    item_description = serializers.CharField(source='item.description', read_only=True)
+    unit_price = serializers.DecimalField(source='item.unit_price', max_digits=10, decimal_places=2, read_only=True)
+    total_price = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = PurchaseHistory
+        fields = [
+            'id', 'customer', 'customer_username', 'customer_email',
+            'item', 'item_name', 'item_description',
+            'quantity', 'unit_price', 'total_price',
+            'purchase_date', 'notes',
+            'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'unit_price', 'total_price', 'purchase_date', 'created_at', 'updated_at']
+    
+    def get_total_price(self, obj):
+        """Calculate total price"""
+        return obj.total_price
+    
+    def validate_quantity(self, value):
+        """Validate that quantity is positive"""
+        if value <= 0:
+            raise serializers.ValidationError("Quantity must be greater than 0")
+        return value
+
+
+class PurchaseHistorySummarySerializer(serializers.ModelSerializer):
+    """Lightweight serializer for PurchaseHistory (for nested use)"""
+    item_name = serializers.CharField(source='item.name', read_only=True)
+    total_price = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = PurchaseHistory
+        fields = ['id', 'item_name', 'quantity', 'total_price', 'purchase_date']
+        read_only_fields = ['id', 'total_price', 'purchase_date']
+    
+    def get_total_price(self, obj):
+        """Calculate total price"""
+        return obj.total_price

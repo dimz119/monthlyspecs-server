@@ -42,6 +42,24 @@
         </div>
         
         <div class="form-group">
+            <label for="id_company">Company:</label>
+            <select name="company" id="id_company" style="width: 100%; padding: 0.75rem; margin-bottom: 1rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem;">
+                <option value="">Select a company (optional)</option>
+                {% for company in form.company.field.queryset %}
+                    <option value="{{ company.id }}" {% if form.company.value == company.id %}selected{% endif %}>
+                        {{ company.name }}
+                    </option>
+                {% endfor %}
+            </select>
+            {% if form.company.errors %}
+                <small style="color: #dc3545;">{{ form.company.errors.0 }}</small>
+            {% endif %}
+            <small style="color: #6c757d; display: block; margin-top: -0.75rem; margin-bottom: 1rem;">
+                Select the company you want to be associated with
+            </small>
+        </div>
+        
+        <div class="form-group">
             <label for="id_password1">Password:</label>
             <input type="password" name="password1" id="id_password1" placeholder="Choose a password" required>
             {% if form.password1.errors %}

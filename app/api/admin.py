@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Role, Company, Customer, Item
+from .models import Role, Company, Customer, Item, PurchaseHistory
 
 
 @admin.register(Role)
@@ -47,3 +47,38 @@ class ItemAdmin(admin.ModelAdmin):
     def get_customer_count(self, obj):
         return obj.customers.count()
     get_customer_count.short_description = 'Customer Count'
+
+
+@admin.register(PurchaseHistory)
+class PurchaseHistoryAdmin(admin.ModelAdmin):
+    list_display = ['id', 'get_customer_name', 'get_item_name', 'quantity', 'unit_price', 'total_price', 'purchase_date']
+    search_fields = ['customer__user__username', 'customer__user__email', 'item__name', 'notes']
+    list_filter = ['purchase_date', 'created_at']
+    raw_id_fields = ['customer', 'item']
+    readonly_fields = ['unit_price', 'total_price', 'purchase_date', 'created_at', 'updated_at']
+    ordering = ['-purchase_date']
+    date_hierarchy = 'purchase_date'
+    
+    fieldsets = (
+        ('Purchase Information', {
+            'fields': ('customer', 'item', 'purchase_date')
+        }),
+        ('Pricing Details', {
+            'fields': ('quantity', 'unit_price', 'total_price'),
+            'description': 'Unit price is from the item. Total price is calculated automatically.'
+        }),
+        ('Additional Information', {
+            'fields': ('notes', 'created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def get_customer_name(self, obj):
+        return obj.customer.user.username
+    get_customer_name.short_description = 'Customer'
+    get_customer_name.admin_order_field = 'customer__user__username'
+    
+    def get_item_name(self, obj):
+        return obj.item.name
+    get_item_name.short_description = 'Item'
+    get_item_name.admin_order_field = 'item__name'

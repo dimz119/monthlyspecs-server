@@ -5,7 +5,7 @@ from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 from drf_spectacular.utils import extend_schema, OpenApiExample
-from .models import Role, Item, Company, Customer
+from .models import Role, Item, Company, Customer, PurchaseHistory
 from .serializers import (
     RoleSerializer,
     ItemSerializer, 
@@ -15,7 +15,8 @@ from .serializers import (
     LogoutResponseSerializer,
     CompanySerializer,
     CustomerSerializer,
-    CustomerCreateSerializer
+    CustomerCreateSerializer,
+    PurchaseHistorySerializer
 )
 
 
@@ -293,3 +294,78 @@ def logout_view(request):
             {'error': str(e)},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
+
+
+class PurchaseHistoryViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint for managing purchase history.
+    Supports filtering by customer.
+    
+    Query Parameters:
+    - customer: Filter by customer ID
+    - customer__user__username: Filter by username
+    """
+    queryset = PurchaseHistory.objects.select_related('customer', 'customer__user', 'item').all()
+    serializer_class = PurchaseHistorySerializer
+    permission_classes = [permissions.IsAuthenticated]
+    filterset_fields = ['customer', 'item', 'customer__user__username']
+    ordering_fields = ['purchase_date', 'total_price', 'quantity']
+    ordering = ['-purchase_date']
+    
+    def get_queryset(self):
+        """
+        Optionally filter purchases by customer.
+        Non-staff users can only see their own purchase history.
+        """
+        queryset = super().get_queryset()
+        
+        # If user is not staff, only show their own purchase history
+        if not self.request.user.is_staff:
+            try:
+                customer = Customer.objects.get(user=self.request.user)
+                queryset = queryset.filter(customer=customer)
+            except Customer.DoesNotExist:
+                queryset = queryset.none()
+        
+        return queryset
+    
+    @action(detail=False, methods=['get'])
+    def my_purchases(self, request):
+        """Get purchase history for the authenticated user"""
+        try:
+            customer = Customer.objects.get(user=request.user)
+            purchases = self.get_queryset().filter(customer=customer)
+            
+            page = self.paginate_queryset(purchases)
+            if page is not None:
+                serializer = self.get_serializer(page, many=True)
+                return self.get_paginated_response(serializer.data)
+            
+            serializer = self.get_serializer(purchases, many=True)
+            return Response(serializer.data)
+        except Customer.DoesNotExist:
+            return Response(
+                {'error': 'Customer profile not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+    
+    @action(detail=False, methods=['get'])
+    def statistics(self, request):
+        """Get purchase statistics for the authenticated user"""
+        try:
+            customer = Customer.objects.get(user=request.user)
+            purchases = self.get_queryset().filter(customer=customer)
+            
+            total_purchases = purchases.count()
+            total_spent = sum(p.total_price for p in purchases)
+            
+            return Response({
+                'total_purchases': total_purchases,
+                'total_spent': str(total_spent),
+                'average_purchase': str(total_spent / total_purchases) if total_purchases > 0 else '0.00'
+            })
+        except Customer.DoesNotExist:
+            return Response(
+                {'error': 'Customer profile not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )

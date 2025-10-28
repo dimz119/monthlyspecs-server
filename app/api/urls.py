@@ -9,6 +9,7 @@ router.register(r'companies', views.CompanyViewSet, basename='company')
 router.register(r'customers', views.CustomerViewSet, basename='customer')
 router.register(r'items', views.ItemViewSet, basename='item')
 router.register(r'users', views.UserViewSet, basename='user')
+router.register(r'purchase-history', views.PurchaseHistoryViewSet, basename='purchase-history')
 
 urlpatterns = [
     # Auth endpoints

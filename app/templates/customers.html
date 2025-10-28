@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+
+{% block title %}Customers - MonthlySpecs{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2 style="margin-bottom: 1.5rem; color: #2c3e50;">고객 관리</h2>
+    
+    <div style="background: #ecf0f1; padding: 1rem; border-radius: 4px; margin-bottom: 1.5rem;">
+        <p style="margin: 0; color: #7f8c8d;">
+            <strong>현재 권한:</strong> {{ customer.role.get_name_display }}
+            | <strong>소속 지점:</strong> 
+            {% for company in user_companies %}
+                {{ company.name }}{% if not forloop.last %}, {% endif %}
+            {% endfor %}
+        </p>
+    </div>
+
+    {% if customers %}
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; background: white;">
+                <thead>
+                    <tr style="background: #34495e; color: white;">
+                        <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #2c3e50;">사용자명</th>
+                        <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #2c3e50;">이메일</th>
+                        <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #2c3e50;">역할</th>
+                        <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #2c3e50;">소속 지점</th>
+                        <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #2c3e50;">가입일</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cust in customers %}
+                    <tr style="border-bottom: 1px solid #ecf0f1; {% if cust.user == user %}background: #e8f4f8;{% endif %}">
+                        <td style="padding: 1rem;">
+                            {{ cust.user.username }}
+                            {% if cust.user == user %}
+                                <span style="background: #3498db; color: white; padding: 0.2rem 0.5rem; border-radius: 3px; font-size: 0.75rem; margin-left: 0.5rem;">나</span>
+                            {% endif %}
+                        </td>
+                        <td style="padding: 1rem;">{{ cust.user.email|default:"—" }}</td>
+                        <td style="padding: 1rem;">
+                            {% if cust.role %}
+                                <span style="background: {% if cust.role.name == 'owner' %}#e74c3c{% elif cust.role.name == 'manager' %}#f39c12{% else %}#95a5a6{% endif %}; color: white; padding: 0.3rem 0.75rem; border-radius: 4px; font-size: 0.85rem;">
+                                    {{ cust.role.get_name_display }}
+                                </span>
+                            {% else %}
+                                <span style="color: #95a5a6;">—</span>
+                            {% endif %}
+                        </td>
+                        <td style="padding: 1rem;">
+                            {% for company in cust.companies.all %}
+                                <span style="background: #ecf0f1; padding: 0.3rem 0.6rem; border-radius: 3px; margin-right: 0.3rem; font-size: 0.85rem;">{{ company.name }}</span>
+                            {% empty %}
+                                <span style="color: #95a5a6;">없음</span>
+                            {% endfor %}
+                        </td>
+                        <td style="padding: 1rem; color: #7f8c8d;">{{ cust.user.date_joined|date:"Y-m-d" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <div style="margin-top: 1.5rem; padding: 1rem; background: #ecf0f1; border-radius: 4px;">
+            <p style="margin: 0; color: #7f8c8d; font-size: 0.9rem;">
+                <strong>총 {{ customers.count }}명</strong>의 고객이 표시되고 있습니다.
+            </p>
+        </div>
+    {% else %}
+        <div style="text-align: center; padding: 3rem; background: #ecf0f1; border-radius: 4px;">
+            <p style="color: #7f8c8d; font-size: 1.1rem; margin: 0;">등록된 고객이 없습니다.</p>
+        </div>
+    {% endif %}
+</div>
+
+<div class="card">
+    <h3 style="margin-bottom: 1rem; color: #2c3e50;">참고사항</h3>
+    <ul style="color: #7f8c8d; line-height: 1.8;">
+        <li>이 목록에는 같은 지점에 소속된 모든 고객이 표시됩니다.</li>
+        <li>오너(Owner)와 매니저(Manager)만 이 페이지에 접근할 수 있습니다.</li>
+        <li>고객 정보를 수정하려면 관리자 페이지를 이용하세요.</li>
+    </ul>
+</div>
+{% endblock %}

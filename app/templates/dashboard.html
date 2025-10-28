@@ -4,76 +4,46 @@
 
 {% block content %}
 <div class="card">
-    <h2 style="margin-bottom: 1.5rem; color: #2c3e50;">Dashboard</h2>
-    
+    <h2 style="margin-bottom: 1.5rem; color: #2c3e50;">안녕하세요, {{ user.username }}님!</h2>
+
     <div style="background: #ecf0f1; padding: 1.5rem; border-radius: 4px; margin-bottom: 2rem;">
-        <h3 style="margin-bottom: 1rem;">User Information</h3>
-        <p><strong>Username:</strong> {{ user.username }}</p>
-        <p><strong>Email:</strong> {{ user.email }}</p>
-        <p><strong>First Name:</strong> {{ user.first_name|default:"Not set" }}</p>
-        <p><strong>Last Name:</strong> {{ user.last_name|default:"Not set" }}</p>
-    </div>
-    
-    {% if customer %}
-        <div style="background: #d5f4e6; padding: 1.5rem; border-radius: 4px; margin-bottom: 2rem;">
-            <h3 style="margin-bottom: 1rem; color: #27ae60;">Customer Profile</h3>
-            <p><strong>Phone:</strong> {{ customer.phone|default:"Not set" }}</p>
-            <p><strong>Address:</strong> {{ customer.address|default:"Not set" }}</p>
-            <p><strong>Date of Birth:</strong> {{ customer.date_of_birth|default:"Not set" }}</p>
-            {% if customer.bio %}
-                <p><strong>Bio:</strong> {{ customer.bio }}</p>
-            {% endif %}
-            <p><strong>Member since:</strong> {{ customer.created_at|date:"F d, Y" }}</p>
-            
-            <h4 style="margin-top: 1.5rem; margin-bottom: 0.5rem;">Companies</h4>
-            {% if customer.companies.all %}
-                <ul>
-                    {% for company in customer.companies.all %}
-                        <li>{{ company.name }} - {{ company.email }}</li>
-                    {% endfor %}
-                </ul>
-            {% else %}
-                <p style="color: #7f8c8d;">No companies associated yet.</p>
-            {% endif %}
-        </div>
-    {% else %}
-        <div style="background: #fff3cd; padding: 1.5rem; border-radius: 4px; margin-bottom: 2rem; border: 1px solid #ffeaa7;">
-            <h3 style="margin-bottom: 1rem; color: #856404;">No Customer Profile</h3>
-            <p>You don't have a customer profile yet. Customer profiles are created automatically when you sign up, but yours may not have been created.</p>
-            <p style="margin-top: 1rem;">Please contact an administrator or use the API to create a customer profile.</p>
-        </div>
-    {% endif %}
-    
-    <div style="margin-top: 2rem;">
-        <h3 style="margin-bottom: 1rem;">Quick Links</h3>
-        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-            <a href="/api/docs/" class="btn">API Documentation</a>
-            <a href="/admin/" class="btn btn-secondary">Admin Panel</a>
-        </div>
+        <h4 style="margin-top: 1.5rem; margin-bottom: 0.5rem;">현재 연결된 지점</h4>
+        {% if customer.companies.all %}
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem;">
+                {% for company in customer.companies.all %}
+                    <div style="background: white; padding: 1rem; border-radius: 4px; border-left: 4px solid #3498db;">
+                        <p style="margin: 0; font-weight: bold;">{{ company.name }}</p>
+                        <p style="margin: 0.25rem 0 0 0; color: #7f8c8d; font-size: 0.9rem;">{{ company.email }}</p>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p style="color: #7f8c8d; background: white; padding: 1rem; border-radius: 4px;">No companies associated yet.</p>
+        {% endif %}
     </div>
 </div>
 
+{% if user.is_staff %}
 <div class="card">
-    <h3 style="margin-bottom: 1rem; color: #2c3e50;">Available API Endpoints</h3>
-    <ul style="list-style: none; padding: 0; font-family: monospace; font-size: 0.9rem;">
-        <li style="padding: 0.5rem; background: #f8f9fa; margin-bottom: 0.25rem; border-radius: 3px;">
-            <strong>POST</strong> /api/auth/login/ - Get authentication token
-        </li>
-        <li style="padding: 0.5rem; background: #f8f9fa; margin-bottom: 0.25rem; border-radius: 3px;">
-            <strong>GET</strong> /api/companies/ - List all companies
-        </li>
-        <li style="padding: 0.5rem; background: #f8f9fa; margin-bottom: 0.25rem; border-radius: 3px;">
-            <strong>GET</strong> /api/customers/ - List all customers
-        </li>
-        <li style="padding: 0.5rem; background: #f8f9fa; margin-bottom: 0.25rem; border-radius: 3px;">
-            <strong>GET</strong> /api/items/ - List all items
-        </li>
-        <li style="padding: 0.5rem; background: #f8f9fa; margin-bottom: 0.25rem; border-radius: 3px;">
-            <strong>GET</strong> /api/users/ - List all users
-        </li>
-    </ul>
-    <p style="margin-top: 1rem; color: #7f8c8d;">
-        Visit the <a href="/api/docs/" style="color: #3498db;">API Documentation</a> for complete details and interactive testing.
-    </p>
+    <h3 style="margin-bottom: 1rem; color: #2c3e50;">System Overview</h3>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 1.5rem; border-radius: 8px; color: white;">
+            <h4 style="margin: 0 0 0.5rem 0; font-size: 0.9rem; opacity: 0.9;">API Status</h4>
+            <p style="margin: 0; font-size: 1.5rem; font-weight: bold;">✓ Online</p>
+        </div>
+        <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 1.5rem; border-radius: 8px; color: white;">
+            <h4 style="margin: 0 0 0.5rem 0; font-size: 0.9rem; opacity: 0.9;">Your Role</h4>
+            <p style="margin: 0; font-size: 1.5rem; font-weight: bold;">
+                {% if customer and customer.role %}{{ customer.role.get_name_display }}{% else %}User{% endif %}
+            </p>
+        </div>
+        <div style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); padding: 1.5rem; border-radius: 8px; color: white;">
+            <h4 style="margin: 0 0 0.5rem 0; font-size: 0.9rem; opacity: 0.9;">Companies</h4>
+            <p style="margin: 0; font-size: 1.5rem; font-weight: bold;">
+                {% if customer %}{{ customer.companies.count }}{% else %}0{% endif %}
+            </p>
+        </div>
+    </div>
 </div>
+{% endif %}
 {% endblock %}

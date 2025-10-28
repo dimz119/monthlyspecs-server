@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+
+{% block title %}회사 관리 - MonthlySpecs{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2 style="margin-bottom: 1.5rem; color: #2c3e50;">회사 관리</h2>
+    
+    <div style="background: #ecf0f1; padding: 1rem; border-radius: 4px; margin-bottom: 1.5rem;">
+        <p style="margin: 0; color: #7f8c8d;">
+            <strong>소속 회사:</strong> {{ companies.count }}개
+            {% if customer.role %}
+                | <strong>권한:</strong> {{ customer.role.get_name_display }}
+            {% endif %}
+        </p>
+    </div>
+
+    {% if companies %}
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 1.5rem;">
+            {% for company in companies %}
+                <div style="background: white; border: 2px solid #ecf0f1; border-radius: 8px; padding: 1.5rem; transition: all 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.05);" onmouseover="this.style.borderColor='#3498db'; this.style.boxShadow='0 4px 8px rgba(52,152,219,0.2)';" onmouseout="this.style.borderColor='#ecf0f1'; this.style.boxShadow='0 2px 4px rgba(0,0,0,0.05)';">
+                    <div style="display: flex; align-items: center; margin-bottom: 1rem;">
+                        <div style="width: 50px; height: 50px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-right: 1rem;">
+                            <span style="font-size: 1.5rem;">🏢</span>
+                        </div>
+                        <div style="flex: 1;">
+                            <h3 style="margin: 0; color: #2c3e50; font-size: 1.2rem;">{{ company.name }}</h3>
+                            <p style="margin: 0.25rem 0 0 0; color: #95a5a6; font-size: 0.85rem;">
+                                고객 {{ company.customers.count }}명
+                            </p>
+                        </div>
+                    </div>
+                    
+                    {% if company.description %}
+                        <p style="color: #7f8c8d; font-size: 0.9rem; margin: 0 0 1rem 0; line-height: 1.5;">
+                            {{ company.description|truncatewords:20 }}
+                        </p>
+                    {% endif %}
+                    
+                    <div style="border-top: 1px solid #ecf0f1; padding-top: 1rem; margin-top: 1rem;">
+                        {% if company.email %}
+                            <p style="margin: 0.5rem 0; color: #7f8c8d; font-size: 0.85rem;">
+                                📧 {{ company.email }}
+                            </p>
+                        {% endif %}
+                        {% if company.phone %}
+                            <p style="margin: 0.5rem 0; color: #7f8c8d; font-size: 0.85rem;">
+                                📞 {{ company.phone }}
+                            </p>
+                        {% endif %}
+                        {% if company.address %}
+                            <p style="margin: 0.5rem 0; color: #7f8c8d; font-size: 0.85rem;">
+                                📍 {{ company.address|truncatewords:10 }}
+                            </p>
+                        {% endif %}
+                    </div>
+                    
+                    <div style="margin-top: 1rem;">
+                        <a href="{% url 'company_detail' company.id %}" class="btn" style="width: 100%; text-align: center; display: block; padding: 0.75rem;">
+                            상세보기
+                        </a>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div style="text-align: center; padding: 3rem; background: #ecf0f1; border-radius: 4px;">
+            <span style="font-size: 3rem; display: block; margin-bottom: 1rem;">🏢</span>
+            <p style="color: #7f8c8d; font-size: 1.1rem; margin: 0;">소속된 회사가 없습니다.</p>
+        </div>
+    {% endif %}
+</div>
+
+{% if customer.role and customer.role.name in 'owner,manager' %}
+<div class="card">
+    <h3 style="margin-bottom: 1rem; color: #2c3e50;">💡 안내</h3>
+    <ul style="color: #7f8c8d; line-height: 1.8;">
+        <li>각 회사 카드를 클릭하면 상세 정보를 확인하고 수정할 수 있습니다.</li>
+        <li>오너(Owner)와 매니저(Manager)는 회사 정보를 수정할 수 있습니다.</li>
+        <li>회사 정보는 소속된 모든 고객에게 표시됩니다.</li>
+    </ul>
+</div>
+{% endif %}
+{% endblock %}

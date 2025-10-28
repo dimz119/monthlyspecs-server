@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+
+{% block title %}구매 목록 - MonthlySpecs{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2 style="margin-bottom: 1.5rem; color: #2c3e50;">구매 목록</h2>
+    
+    <div style="background: #ecf0f1; padding: 1rem; border-radius: 4px; margin-bottom: 1.5rem;">
+        <p style="margin: 0; color: #7f8c8d;">
+            <strong>사용자:</strong> {{ user.username }}
+            {% if customer.role %}
+                | <strong>역할:</strong> {{ customer.role.get_name_display }}
+            {% endif %}
+        </p>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 1.5rem; border-radius: 8px; color: white; text-align: center;">
+            <h4 style="margin: 0 0 0.5rem 0; font-size: 0.9rem; opacity: 0.9;">총 구매 건수</h4>
+            <p style="margin: 0; font-size: 2rem; font-weight: bold;">{{ total_purchases }}</p>
+        </div>
+        <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 1.5rem; border-radius: 8px; color: white; text-align: center;">
+            <h4 style="margin: 0 0 0.5rem 0; font-size: 0.9rem; opacity: 0.9;">총 구매 금액</h4>
+            <p style="margin: 0; font-size: 2rem; font-weight: bold;">₩{{ total_spent|floatformat:0 }}</p>
+        </div>
+        <div style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); padding: 1.5rem; border-radius: 8px; color: white; text-align: center;">
+            <h4 style="margin: 0 0 0.5rem 0; font-size: 0.9rem; opacity: 0.9;">평균 구매 금액</h4>
+            <p style="margin: 0; font-size: 2rem; font-weight: bold;">₩{{ average_purchase|floatformat:0 }}</p>
+        </div>
+    </div>
+
+    {% if purchases %}
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; background: white;">
+                <thead>
+                    <tr style="background: #34495e; color: white;">
+                        <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #2c3e50;">구매일</th>
+                        <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #2c3e50;">상품명</th>
+                        <th style="padding: 1rem; text-align: center; border-bottom: 2px solid #2c3e50;">수량</th>
+                        <th style="padding: 1rem; text-align: right; border-bottom: 2px solid #2c3e50;">단가</th>
+                        <th style="padding: 1rem; text-align: right; border-bottom: 2px solid #2c3e50;">총 금액</th>
+                        <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #2c3e50;">메모</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for purchase in purchases %}
+                    <tr style="border-bottom: 1px solid #ecf0f1;">
+                        <td style="padding: 1rem; color: #7f8c8d;">
+                            {{ purchase.purchase_date|date:"Y-m-d H:i" }}
+                        </td>
+                        <td style="padding: 1rem;">
+                            <strong>{{ purchase.item.name }}</strong>
+                            {% if purchase.item.description %}
+                                <br>
+                                <small style="color: #95a5a6;">{{ purchase.item.description|truncatewords:10 }}</small>
+                            {% endif %}
+                        </td>
+                        <td style="padding: 1rem; text-align: center;">
+                            <span style="background: #ecf0f1; padding: 0.3rem 0.75rem; border-radius: 4px; font-weight: 600;">
+                                {{ purchase.quantity }}
+                            </span>
+                        </td>
+                        <td style="padding: 1rem; text-align: right; color: #7f8c8d;">
+                            ₩{{ purchase.unit_price|floatformat:0 }}
+                        </td>
+                        <td style="padding: 1rem; text-align: right;">
+                            <strong style="color: #2c3e50; font-size: 1.1rem;">₩{{ purchase.total_price|floatformat:0 }}</strong>
+                        </td>
+                        <td style="padding: 1rem; color: #7f8c8d; font-size: 0.9rem;">
+                            {{ purchase.notes|default:"—" }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr style="background: #f8f9fa; font-weight: bold;">
+                        <td colspan="4" style="padding: 1rem; text-align: right; border-top: 2px solid #34495e;">
+                            총계:
+                        </td>
+                        <td style="padding: 1rem; text-align: right; border-top: 2px solid #34495e; color: #e74c3c; font-size: 1.2rem;">
+                            ₩{{ total_spent|floatformat:0 }}
+                        </td>
+                        <td style="padding: 1rem; border-top: 2px solid #34495e;"></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    {% else %}
+        <div style="text-align: center; padding: 3rem; background: #ecf0f1; border-radius: 4px;">
+            <span style="font-size: 3rem; display: block; margin-bottom: 1rem;">🛒</span>
+            <p style="color: #7f8c8d; font-size: 1.1rem; margin: 0;">아직 구매 내역이 없습니다.</p>
+            <p style="color: #95a5a6; font-size: 0.9rem; margin: 0.5rem 0 0 0;">첫 구매를 시작해보세요!</p>
+        </div>
+    {% endif %}
+</div>
+
+<div class="card">
+    <h3 style="margin-bottom: 1rem; color: #2c3e50;">💡 안내</h3>
+    <ul style="color: #7f8c8d; line-height: 1.8;">
+        <li>이 페이지에는 회원님의 모든 구매 내역이 표시됩니다.</li>
+        <li>구매 내역은 최신순으로 정렬됩니다.</li>
+        <li>구매 통계를 통해 전체 구매 패턴을 확인할 수 있습니다.</li>
+    </ul>
+</div>
+{% endblock %}

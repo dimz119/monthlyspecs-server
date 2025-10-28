@@ -1,0 +1,235 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ company.name }} - MonthlySpecs{% endblock %}
+
+{% block extra_css %}
+<style>
+    .info-field {
+        margin-bottom: 1.5rem;
+    }
+    
+    .info-label {
+        display: block;
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+    }
+    
+    .info-value {
+        display: block;
+        padding: 0.75rem;
+        background: #f8f9fa;
+        border-radius: 4px;
+        color: #495057;
+        border: 1px solid #e9ecef;
+    }
+    
+    .edit-mode .info-value {
+        display: none;
+    }
+    
+    .edit-mode input,
+    .edit-mode textarea {
+        display: block;
+    }
+    
+    input[type="text"],
+    input[type="email"],
+    input[type="url"],
+    textarea {
+        display: none;
+    }
+    
+    .edit-mode input[type="text"],
+    .edit-mode input[type="email"],
+    .edit-mode input[type="url"],
+    .edit-mode textarea {
+        display: block;
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        font-size: 1rem;
+    }
+    
+    .edit-mode textarea {
+        min-height: 100px;
+        resize: vertical;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        margin-top: 1.5rem;
+    }
+    
+    .btn-edit {
+        background: #3498db;
+    }
+    
+    .btn-edit:hover {
+        background: #2980b9;
+    }
+    
+    .btn-cancel {
+        background: #95a5a6;
+    }
+    
+    .btn-cancel:hover {
+        background: #7f8c8d;
+    }
+    
+    .btn-save {
+        background: #27ae60;
+    }
+    
+    .btn-save:hover {
+        background: #229954;
+    }
+    
+    .stat-box {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 1.5rem;
+        border-radius: 8px;
+        color: white;
+        text-align: center;
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+        font-weight: bold;
+        margin: 0.5rem 0;
+    }
+    
+    .stat-label {
+        font-size: 0.9rem;
+        opacity: 0.9;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <h2 style="margin: 0; color: #2c3e50;">{{ company.name }}</h2>
+        <a href="{% url 'company_list' %}" class="btn btn-secondary">← 목록으로</a>
+    </div>
+    
+    <div style="background: #ecf0f1; padding: 1rem; border-radius: 4px; margin-bottom: 1.5rem;">
+        <p style="margin: 0; color: #7f8c8d;">
+            <strong>권한:</strong> {{ customer.role.get_name_display }}
+            {% if can_edit %}
+                <span style="background: #27ae60; color: white; padding: 0.2rem 0.5rem; border-radius: 3px; font-size: 0.75rem; margin-left: 0.5rem;">수정 가능</span>
+            {% else %}
+                <span style="background: #95a5a6; color: white; padding: 0.2rem 0.5rem; border-radius: 3px; font-size: 0.75rem; margin-left: 0.5rem;">읽기 전용</span>
+            {% endif %}
+        </p>
+    </div>
+
+    <form method="post" id="companyForm">
+        {% csrf_token %}
+        
+        <div class="info-field">
+            <label class="info-label">회사명</label>
+            <span class="info-value">{{ company.name }}</span>
+            <input type="text" name="name" value="{{ company.name }}" required>
+        </div>
+        
+        <div class="info-field">
+            <label class="info-label">설명</label>
+            <span class="info-value">{{ company.description|default:"—" }}</span>
+            <textarea name="description">{{ company.description }}</textarea>
+        </div>
+        
+        <div class="info-field">
+            <label class="info-label">주소</label>
+            <span class="info-value">{{ company.address|default:"—" }}</span>
+            <textarea name="address">{{ company.address }}</textarea>
+        </div>
+        
+        <div class="info-field">
+            <label class="info-label">전화번호</label>
+            <span class="info-value">{{ company.phone|default:"—" }}</span>
+            <input type="text" name="phone" value="{{ company.phone }}">
+        </div>
+        
+        <div class="info-field">
+            <label class="info-label">이메일</label>
+            <span class="info-value">{{ company.email|default:"—" }}</span>
+            <input type="email" name="email" value="{{ company.email }}">
+        </div>
+        
+        <div class="info-field">
+            <label class="info-label">웹사이트</label>
+            <span class="info-value">
+                {% if company.website %}
+                    <a href="{{ company.website }}" target="_blank" style="color: #3498db;">{{ company.website }}</a>
+                {% else %}
+                    —
+                {% endif %}
+            </span>
+            <input type="url" name="website" value="{{ company.website }}">
+        </div>
+        
+        {% if can_edit %}
+        <div class="action-buttons">
+            <button type="button" class="btn btn-edit" id="editBtn" onclick="toggleEditMode()">
+                ✏️ 수정하기
+            </button>
+            <button type="submit" class="btn btn-save" id="saveBtn" style="display: none;">
+                💾 저장하기
+            </button>
+            <button type="button" class="btn btn-cancel" id="cancelBtn" style="display: none;" onclick="toggleEditMode()">
+                ✖️ 취소
+            </button>
+        </div>
+        {% endif %}
+    </form>
+</div>
+
+<div class="card">
+    <h3 style="margin-bottom: 1.5rem; color: #2c3e50;">통계</h3>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+        <div class="stat-box">
+            <div class="stat-label">소속 고객</div>
+            <div class="stat-number">{{ customer_count }}</div>
+        </div>
+        <div class="stat-box" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+            <div class="stat-label">등록일</div>
+            <div class="stat-number" style="font-size: 1.2rem;">{{ company.created_at|date:"Y-m-d" }}</div>
+        </div>
+        <div class="stat-box" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+            <div class="stat-label">최종 수정</div>
+            <div class="stat-number" style="font-size: 1.2rem;">{{ company.updated_at|date:"Y-m-d" }}</div>
+        </div>
+    </div>
+</div>
+
+{% if can_edit %}
+<script>
+function toggleEditMode() {
+    const form = document.getElementById('companyForm');
+    const editBtn = document.getElementById('editBtn');
+    const saveBtn = document.getElementById('saveBtn');
+    const cancelBtn = document.getElementById('cancelBtn');
+    
+    if (form.classList.contains('edit-mode')) {
+        // Cancel edit mode
+        form.classList.remove('edit-mode');
+        editBtn.style.display = 'block';
+        saveBtn.style.display = 'none';
+        cancelBtn.style.display = 'none';
+        // Reset form
+        form.reset();
+    } else {
+        // Enter edit mode
+        form.classList.add('edit-mode');
+        editBtn.style.display = 'none';
+        saveBtn.style.display = 'block';
+        cancelBtn.style.display = 'block';
+    }
+}
+</script>
+{% endif %}
+{% endblock %}

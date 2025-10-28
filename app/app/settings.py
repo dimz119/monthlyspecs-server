@@ -191,6 +191,9 @@ ACCOUNT_EMAIL_VERIFICATION = 'none'  # Don't verify emails in development
 LOGIN_REDIRECT_URL = '/dashboard/'  # Redirect after login
 LOGOUT_REDIRECT_URL = '/'
 ACCOUNT_LOGOUT_ON_GET = True  # Allow logout via GET request
+ACCOUNT_FORMS = {
+    'signup': 'console.forms.CustomSignupForm',
+}
 
 # Email Backend - Use console backend for development (prints to console)
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
